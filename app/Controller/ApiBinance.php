@@ -15,7 +15,7 @@ class ApiBinance extends AbstractController
         $ticks = $api->candlesticks($bname, "1M",1);
 
         $open = array_column($ticks,'open');
-        // 自定义开盘价格
+        // 自定义开盘价格,
         if($opens == 0){
             $opens = $open[0];
         }
