@@ -7,11 +7,11 @@ use  Binance;
 class ApiBinance extends AbstractController
 {
     public function authBinance(){
-        $this->yue('ADADOWNUSDT', 0.00155, 64516.12, 100, 2);
+        $this->yue('ADADOWNUSDT', 0.00160, 64516.12, 100, 2);
     }
 
     public function yue($bname = "ADADOWNUSDT", $opens = 0.00160, $quantity = 64516.12, $usdt = 100 , $shuliangweishu = 2){
-        $api = new Binance\API(env(KEY), env(SECRET));
+        $api = new Binance\API(env('KEY'), env('SECRET'));
         $ticks = $api->candlesticks($bname, "1M",1);
 
         $open = array_column($ticks,'open');
@@ -124,7 +124,7 @@ class ApiBinance extends AbstractController
 
     public function test(){
         print('1111zzzzzzzzzzzzzzzzzzzzzz,id:');
-//        $api = new Binance\API(env(KEY), env(SECRET));
+//        $api = new Binance\API(env('KEY'), env('SECRET'));
 //        // 获取最新价格.
 //        $ticker = $api->prices();
 //        print_r($ticker);
