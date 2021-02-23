@@ -26,14 +26,13 @@ class ApiBinance extends AbstractController
 
         $close = array_column($ticks, 'close');
 
-
         try {
             $price = $api->price($bname);
         } catch (\Exception $e) {
             var_dump("查询价格错误:", $e);
         }   // 最新价格
         $quantity = bcdiv($usdt, $price, $shuliangweishu);  // 金额除以价格=数量
-        //exit;
+
         var_dump($opens);
         var_dump($close);
         if($close[0] > $opens){
@@ -90,7 +89,6 @@ class ApiBinance extends AbstractController
             } catch (\Exception $e) {
                 var_dump("查询资产错误:", $e);
             }
-            //$assets_total = bcadd($balances['ADADOWN']['available'], $balances['ADADOWN']['onOrder'], $shuliangweishu);
 
             // 判断价值..
             $jiazhi = bcmul($balances['ADADOWN']['available'], $price, 2);
