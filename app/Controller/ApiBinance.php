@@ -7,13 +7,17 @@ use  Binance;
 class ApiBinance extends AbstractController
 {
     public function authBinance(){
-        $this->yue('ADADOWNUSDT', 0.00130,  400, 2);
+        //1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
+        //$this->yue('ADADOWNUSDT', 0.00190,  400, 2);
+        //$this->yue('ADAUPUSDT', 0.00190,  400, 2);
+        $this->yue('LINKUPUSDT', 'LINKUP', '1d', 0,  0, 2);
+        //$this->yue('LINKDOWNUSDT', 0.00143,  400, 2);
     }
 
-    public function yue($bname = "ADADOWNUSDT", $opens = 0.00160, $usdt = 100 , $shuliangweishu = 2){
+    public function yue($bname, $name, $klines, $opens = 0, $usdt = 0 , $shuliangweishu = 2){
         $api = new Binance\API(env('KEY'), env('SECRET'));
         try {
-            $ticks = $api->candlesticks($bname, "1M", 1);
+            $ticks = $api->candlesticks($bname, $klines, 1);
         } catch (\Exception $e) {
             var_dump("查询K线错误", $e);
         }
@@ -25,12 +29,23 @@ class ApiBinance extends AbstractController
         }
 
         $close = array_column($ticks, 'close');
-
+        // 最新价格
         try {
             $price = $api->price($bname);
         } catch (\Exception $e) {
             var_dump("查询价格错误:", $e);
-        }   // 最新价格
+        }
+
+        // 资产查询
+        try {
+            $balances = $api->balances($bname);
+        } catch (\Exception $e) {
+            var_dump("查询资产错误:", $e);
+        }
+        if($usdt == 0){
+            $usdt = $balances['USDT']['available'];
+        }
+
         $quantity = bcdiv($usdt, $price, $shuliangweishu);  // 金额除以价格=数量
 
         var_dump($opens);
@@ -41,22 +56,19 @@ class ApiBinance extends AbstractController
 
             // 取消卖单
             $this->CancelOrder($bname, "SELL");
-            // 资产查询
-            try {
-                $balances = $api->balances($bname);
-            } catch (\Exception $e) {
-                var_dump("查询资产错误:", $e);
-            }
-            $assets_total = bcadd($balances['ADADOWN']['available'], $balances['ADADOWN']['onOrder'], $shuliangweishu);
+
+            $assets_total = bcadd($balances[$name]['available'], $balances[$name]['onOrder'], $shuliangweishu);
+
+            var_dump("资产:", $assets_total);
+            var_dump("数量:", $quantity);
             if($assets_total >= $quantity){
                 var_dump('资产已大于等于, 购买数量, 无需购买');
                 return;
             }
 
             $quan = $this->openOrders($bname, "SELL", $shuliangweishu);
+            var_dump("已下单数量:", $quan);
 
-            var_dump("资产:", $quan);
-            var_dump("数量:", $quantity);
             if($quan >= $quantity){
                 print('买单已下: 无需重复下单').PHP_EOL;
                 return;
@@ -91,18 +103,18 @@ class ApiBinance extends AbstractController
             }
 
             // 判断价值..
-            $jiazhi = bcmul($balances['ADADOWN']['available'], $price, 2);
+            $jiazhi = bcmul($balances[$name]['available'], $price, 2);
 
             if($jiazhi < 10){
                 var_dump('资产数量:', $jiazhi);
                 print('资产价值不足 100 $ 无法下单').PHP_EOL;
                 return;
             }
-            var_dump('什么鬼',bcadd($balances['ADADOWN']['available'], 0, 2));
+            var_dump('什么鬼',bcadd($balances[$name]['available'], 0, 2));
             var_dump($bname);
             var_dump($price);
             try {
-                $order = $api->sell($bname, bcadd($balances['ADADOWN']['available'], 0, 2), $price);
+                $order = $api->sell($bname, bcadd($balances[$name]['available'], 0, 2), $price);
                 print_r($order);
             } catch (\Exception $e) {
                 var_dump("下单卖出错误:", $e);
