@@ -8,8 +8,9 @@ class ApiBinance extends AbstractController
 {
     public function authBinance(){
         //1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
-        //$this->yue('ADADOWNUSDT', 0.00190,  400, 2);
         //$this->yue('ADAUPUSDT', 0.00190,  400, 2);
+        //$this->yue('ADADOWNUSDT', 0.00190,  400, 2);
+
         $this->yue('LINKUPUSDT', 'LINKUP', '1d', 0,  0, 2);
         //$this->yue('LINKDOWNUSDT', 0.00143,  400, 2);
     }
