@@ -8,11 +8,11 @@ class ApiBinance extends AbstractController
 {
     public function authBinance(){
         //1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
-        //$this->yue('ADAUPUSDT', 0.00190,  400, 2);
-        //$this->yue('ADADOWNUSDT', 0.00190,  400, 2);
+        //$this->yue('ADAUPUSDT','ADAUP','1d', 0,  150, 2);
+        $this->yue('ADADOWNUSDT', 'ADADOWN',  '1d', 0, 0, 2);
 
-        $this->yue('LINKUPUSDT', 'LINKUP', '1d', 0,  0, 2);
-        //$this->yue('LINKDOWNUSDT', 0.00143,  400, 2);
+        //$this->yue('LINKUPUSDT', 'LINKUP', '1d', 0,  0, 2);
+        //$this->yue('LINKDOWNUSDT', 'LINKDOWN','1d',0,  150, 2);
     }
 
     public function yue($bname, $name, $klines, $opens = 0, $usdt = 0 , $shuliangweishu = 2){
@@ -43,17 +43,20 @@ class ApiBinance extends AbstractController
         } catch (\Exception $e) {
             var_dump("查询资产错误:", $e);
         }
-        if($usdt == 0){
-            $usdt = $balances['USDT']['available'];
-        }
 
-        $quantity = bcdiv($usdt, $price, $shuliangweishu);  // 金额除以价格=数量
+
+
 
         var_dump($opens);
         var_dump($close);
         if($close[0] > $opens){
             // 买入操作
             print('买入--------------------').PHP_EOL;
+            if($usdt == 0){
+                $usdt = $balances['USDT']['available'];
+                var_dump('资产数量', $usdt);
+            }
+            $quantity = bcdiv($usdt, $price, $shuliangweishu);  // 金额除以价格=数量
 
             // 取消卖单
             $this->CancelOrder($bname, "SELL");
@@ -91,6 +94,14 @@ class ApiBinance extends AbstractController
 
             $quan = $this->openOrders($bname, "SELL", $shuliangweishu);
 
+            if($usdt == 0){
+                $usdt = $balances[$name]['available'];
+                var_dump('资产数量', $usdt);
+            }
+            $quantity = bcdiv($usdt, $price, $shuliangweishu);  // 金额除以价格=数量
+
+            var_dump('已下单数量:', $quan);
+            var_dump('应下单数量:', $quantity);
             if($quan >= $quantity){
                 print('卖单已下: 无需重复下单').PHP_EOL;
                 return;
@@ -142,6 +153,7 @@ class ApiBinance extends AbstractController
                 }
             }
         } else {
+            var_dump($openorders);
             foreach ($openorders as $key => $value){
                 // 验证是否挂卖单
                 if($openorders[$key]['side'] == "SELL"){
