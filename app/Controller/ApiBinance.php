@@ -3,9 +3,15 @@
 
 namespace App\Controller;
 use  Binance;
+use Hyperf\Logger\LoggerFactory;
 
 class ApiBinance extends AbstractController
 {
+    protected $logger;
+
+    public function __construct(LoggerFactory $loggerFactory){
+        $this->logger = $loggerFactory->get('hyperf','default');
+    }
     public function authBinance(){
         //1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
         //$this->yue('ADAUPUSDT','ADAUP','1d', 0,  150, 2);
@@ -20,7 +26,7 @@ class ApiBinance extends AbstractController
         try {
             $ticks = $api->candlesticks($bname, $klines, 1);
         } catch (\Exception $e) {
-            var_dump("查询K线错误", $e);
+            $this->logger->error("查询K线错误", $e);
         }
 
         $open = array_column($ticks,'open');
@@ -34,27 +40,27 @@ class ApiBinance extends AbstractController
         try {
             $price = $api->price($bname);
         } catch (\Exception $e) {
-            var_dump("查询价格错误:", $e);
+            $this->logger->error("查询价格错误:", $e);
         }
 
         // 资产查询
         try {
             $balances = $api->balances($bname);
         } catch (\Exception $e) {
-            var_dump("查询资产错误:", $e);
+            $this->logger->error("查询资产错误:", $e);
         }
 
 
 
 
-        var_dump($opens);
-        var_dump($close);
+//        var_dump($opens);
+//        var_dump($close);
         if($close[0] > $opens){
             // 买入操作
-            print('买入--------------------').PHP_EOL;
+            $this->logger->info('买入--------------------').PHP_EOL;
             if($usdt == 0){
                 $usdt = $balances['USDT']['available'];
-                var_dump('资产数量', $usdt);
+                $this->logger->info('资产数量', $usdt);
             }
             $quantity = bcdiv($usdt, $price, $shuliangweishu);  // 金额除以价格=数量
 
@@ -63,27 +69,27 @@ class ApiBinance extends AbstractController
 
             $assets_total = bcadd($balances[$name]['available'], $balances[$name]['onOrder'], $shuliangweishu);
 
-            var_dump("资产:", $assets_total);
-            var_dump("数量:", $quantity);
+            $this->logger->info("资产:", $assets_total);
+            $this->logger->info("数量:", $quantity);
             if($assets_total >= $quantity){
-                var_dump('资产已大于等于, 购买数量, 无需购买');
+                $this->logger->info('资产已大于等于, 购买数量, 无需购买');
                 return;
             }
 
             $quan = $this->openOrders($bname, "SELL", $shuliangweishu);
-            var_dump("已下单数量:", $quan);
+            $this->logger->info("已下单数量:", $quan);
 
             if($quan >= $quantity){
-                print('买单已下: 无需重复下单').PHP_EOL;
+                $this->logger->alert('买单已下: 无需重复下单').PHP_EOL;
                 return;
             }
             try {
                 $order = $api->buy($bname, $quantity, $price);
             } catch (\Exception $e) {
-                var_dump("下单买入错误:", $e);
+                $this->logger->error("下单买入错误:", $e);
             }
 
-            print_r($order);
+            $this->logger->info($order);
             return;
         }else{
             // 卖出操作
@@ -96,12 +102,12 @@ class ApiBinance extends AbstractController
 
             if($usdt == 0){
                 $usdt = $balances[$name]['available'];
-                var_dump('资产数量', $usdt);
+                $this->logger->info('资产数量', $usdt);
             }
             $quantity = bcdiv($usdt, $price, $shuliangweishu);  // 金额除以价格=数量
 
-            var_dump('已下单数量:', $quan);
-            var_dump('应下单数量:', $quantity);
+            $this->logger->info('已下单数量:', $quan);
+            $this->logger->info('应下单数量:', $quantity);
             if($quan >= $quantity){
                 print('卖单已下: 无需重复下单').PHP_EOL;
                 return;
@@ -111,25 +117,25 @@ class ApiBinance extends AbstractController
             try {
                 $balances = $api->balances($bname);
             } catch (\Exception $e) {
-                var_dump("查询资产错误:", $e);
+                $this->logger->error("查询资产错误:", $e);
             }
 
             // 判断价值..
             $jiazhi = bcmul($balances[$name]['available'], $price, 2);
 
             if($jiazhi < 10){
-                var_dump('资产数量:', $jiazhi);
-                print('资产价值不足 100 $ 无法下单').PHP_EOL;
+                $this->logger->info('资产数量:', $jiazhi);
+                $this->logger->alert('资产价值不足 100 $ 无法下单').PHP_EOL;
                 return;
             }
-            var_dump('什么鬼',bcadd($balances[$name]['available'], 0, 2));
-            var_dump($bname);
-            var_dump($price);
+            $this->logger->info('什么鬼',bcadd($balances[$name]['available'], 0, 2));
+            $this->logger->info($bname);
+            $this->logger->info($price);
             try {
                 $order = $api->sell($bname, bcadd($balances[$name]['available'], 0, 2), $price);
-                print_r($order);
+                $this->logger->info($order);
             } catch (\Exception $e) {
-                var_dump("下单卖出错误:", $e);
+                $this->logger->error("下单卖出错误:", $e);
             }
         }
     }
@@ -141,7 +147,7 @@ class ApiBinance extends AbstractController
         try {
             $openorders = $api->openOrders($bname);
         } catch (\Exception $e) {
-            var_dump("查询挂单错误:", $e);
+            $this->logger->error("查询挂单错误:", $e);
         }     // 获取已挂单信息
         $quan = 0;
         if($sale == "BUY"){
@@ -153,7 +159,7 @@ class ApiBinance extends AbstractController
                 }
             }
         } else {
-            var_dump($openorders);
+            $this->logger->info($openorders);
             foreach ($openorders as $key => $value){
                 // 验证是否挂卖单
                 if($openorders[$key]['side'] == "SELL"){
@@ -172,7 +178,7 @@ class ApiBinance extends AbstractController
         try {
             $openorders = $api->openOrders($bname);
         } catch (\Exception $e) {
-            var_dump("查询已挂单错误:", $e);
+            $this->logger->error("查询已挂单错误:", $e);
         }     // 获取已挂单信息
         if($sale == "BUY"){
             foreach ($openorders as $key => $value){
@@ -181,9 +187,9 @@ class ApiBinance extends AbstractController
                     // 取消订单
                     try {
                         $response = $api->cancel($bname, $openorders[$key]['orderId']);
-                        var_dump("取消订单:", $response);
+                        $this->logger->info("取消订单:", $response);
                     } catch (\Exception $e) {
-                        var_dump("撤销订单错误!", $e);
+                        $this->logger->error("撤销订单错误!", $e);
                     }
                 }
             }
@@ -194,9 +200,9 @@ class ApiBinance extends AbstractController
                     // 取消订单
                     try {
                         $response = $api->cancel($bname, openorders[$key]['orderId']);
-                        var_dump("取消订单:", $response);
+                        $this->logger->info("取消订单:", $response);
                     } catch (\Exception $e) {
-                        var_dump("撤销订单错误!", $e);
+                        $this->logger->error("撤销订单错误!", $e);
                     }
                 }
             }
