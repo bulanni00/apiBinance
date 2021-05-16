@@ -17,17 +17,17 @@ class IndexController extends AbstractController
 	
     public function index()
     {
-    	$id = Db::table('users_kh')->first();
-		var_dump($id);
-
-		
-
-        $user = $this->request->input('user', 'Hyperf');
-        $method = $this->request->getMethod();
+//    	$id = Db::table('users_kh')->first();
+//		var_dump($id);
+//
+//
+//
+//        $user = $this->request->input('user', 'Hyperf');
+//        $method = $this->request->getMethod();
 
         return [
-            'method' => $method,
-            'message' => "Hello {$user}.",
+            'method' => 1111,
+            'message' => "Hello .",
         ];
     }
 }

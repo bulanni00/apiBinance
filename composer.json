@@ -36,7 +36,9 @@
         "hyperf/rpc-client": "~2.1.0",
         "hyperf/rpc-server": "~2.1.0",
         "hyperf/tracer": "~2.1.0",
-        "jaggedsoft/php-binance-api": "@dev"
+        "jaggedsoft/php-binance-api": "@dev",
+        "ext-mysqli": "*",
+        "ext-bcmath": "*"
     },
     "require-dev": {
         "swoole/ide-helper": "^4.5",
